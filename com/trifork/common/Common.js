@@ -75,45 +75,44 @@
            * @return void
            */
           var namespace = (function() {
-              var validIdentifier = /^(?:[a-zA-Z_]\w*[.])*[a-zA-Z_]\w*$/;
-              function inOrderDescend(t,initialContext) {
-                  var i,N;
-                  if (typeof t === 'object') {
-                      if (t instanceof Array) {//an array of strings
-                          for (i=0,N=t.length;i<N;i++) {
-                              initialContext[t[i]] = initialContext[t[i]] || {};
-                          }
-                      }
-                      else {//t is a specification object e.g, {com: {trifork: ['model,view']}}
-                          for (i in t) if (t.hasOwnProperty(i)) {
-                              initialContext[i] = initialContext[i] || {};
-                              inOrderDescend(t[i], initialContext[i]);//recursively descend tree
-                          }
-                      }
-                  } else if (typeof t === 'string') {
-                       return (function handleStringCase(){
-                          var context, parts;
-                          if (!validIdentifier.test(t)) {
-                              throw new Error('"'+t+'" is not a valid name for a package.');
-                          }
-                          context = initialContext;
-                          parts = t.split('.');
-                          for (i=0,N=parts.length;i<N;i++) {
-                              t = parts[i];
-                              context[t] = context[t] || {};
-                              context = context[t];
-                          }
-                          return context;
-                       })();
-                  }
-                  else {
-                     throw new TypeError();
-                  }
-              }
-              return function(spec,context) { 
-                  return inOrderDescend(spec, context||window);   
-              };
-          })();
+				var validIdentifier = /^(?:[a-zA-Z_]\w*[.])*[a-zA-Z_]\w*$/;
+				function inOrderDescend(t,initialContext) {
+					var i,N;
+					if (typeof t === 'object') {
+						if (typeof t.length === 'number') {//assume an array-like object
+							for (i=0,N=t.length;i<N;i++) {
+								inOrderDescend(t[i],initialContext);
+							}
+						}
+						else {//t is a specification object e.g, {com: {trifork: ['model,view']}}
+							for (i in t) if (t.hasOwnProperty(i)) {
+								initialContext[i] = initialContext[i] || {};
+								inOrderDescend(t[i], initialContext[i]);//recursively descend tree
+							}
+						}
+					} else if (typeof t === 'string') {
+						 (function handleStringCase(){
+							var context, parts;
+							if (!validIdentifier.test(t)) {
+								throw new Error('"'+t+'" is not a valid name for a package.');
+							}
+							context = initialContext;
+							parts = t.split('.');
+							for (i=0,N=parts.length;i<N;i++) {
+								t = parts[i];
+								context[t] = context[t] || {};
+								context = context[t];
+							}
+						 })();
+					}
+					else {
+					   throw new TypeError();
+					}
+				}
+				return function(spec,context) { 
+					return inOrderDescend(spec, context||window);   
+				};
+		  })();
 
 			
           /**
